@@ -1,5 +1,6 @@
-import os
-import uuid
+import os, uuid
+from .curl import CurlError, curl_fetch
+from flask import Response, make_response
 
 filename_to_uuid = {}
 STORE_DIR = os.environ.get('STORE_DIR', './data')
@@ -29,5 +30,14 @@ def save(filename, content):
 def load(filename):
     """
     fetches file
+
+    :param filename:
     """
-    ...
+    try:
+        code, header, body = curl_fetch(filename)
+    except CurlError as e:
+        return make_response(f'Problem occured when curl: {e}', 400)
+    
+    h = { "content-type": header.get("content-type", "applicadtion/octet-stream")}
+    
+    return make_response(f"{body}", code, h)

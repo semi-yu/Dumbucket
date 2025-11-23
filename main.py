@@ -29,7 +29,11 @@ def store():
 
 @app.get('/fetch')
 def fetch():
-    if "" not in request.args: return make_response("")
+    filename = request.args.get("filename")
+
+    if not filename: return make_response("File location is required", 400)
+
+    return load(filename)
 
 if __name__ == "__main__":
     app.run()
