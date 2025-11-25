@@ -1,11 +1,12 @@
-import os
-import io, pycurl
+import os, io, pycurl
+
 from urllib.parse import urlparse
+
+from .error_handle.error import FileNotFound, InternalError
 
 TIMEOUT = os.environ.get('TIMEOUT', 5)
 
-class CurlError(Exception):
-    pass
+class CurlError(Exception): pass
 
 def process_header(raw_header):
     header_blocks = raw_header.strip().split('\r\n\r\n')
@@ -45,7 +46,10 @@ def curl_fetch(url):
 
         status_code = c.getinfo(pycurl.RESPONSE_CODE)
     except pycurl.error as e:
-        raise CurlError(str(e))
+        errno, errmsg = e.args
+
+        if errno == 37: raise FileNotFound()
+        else: raise InternalError(errmsg)
     finally:
         c.close()
 
@@ -54,7 +58,6 @@ def curl_fetch(url):
         body = body_buf.getvalue()
 
     scheme = urlparse(url).scheme
-    if scheme == "file" and status_code == 0:
-        status_code = 200
+    if scheme not in ['http', 'https'] and status_code == 0: status_code = 200
 
     return status_code, header, body

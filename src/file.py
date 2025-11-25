@@ -1,43 +1,49 @@
 import os, uuid
-from .curl import CurlError, curl_fetch
-from flask import Response, make_response
 
-filename_to_uuid = {}
+from .curl import curl_fetch
+from .general.transfer import SaveResult, LoadResult
+
+
+FILENAME_TO_UUID = {}
 STORE_DIR = os.environ.get('STORE_DIR', './data')
 os.makedirs(STORE_DIR, exist_ok = True)
 
-def save(filename, content):
+def save(filename, content) -> SaveResult | None:
     """
     stores file
 
     :param filename:
+    :type str:
     :param content:
-    :return :
+    :type werkzeug.datastructures.file_storage.FileStorage:
+    
+    :returns: SaveResult | None
     """
     _, ext = os.path.splitext(filename)
     file_id = uuid.uuid1().hex + ext
 
-    filename_to_uuid[filename] = file_id
+    FILENAME_TO_UUID[filename] = file_id
     save_path = os.path.join(STORE_DIR, file_id)
     
     try:
         content.save(save_path)
-    except Exception:
-        return False
+    except Exception as e:
+        raise e
+    
+    return SaveResult(filename, file_id)
 
-    return True
-
-def load(filename):
+def load(uri) -> LoadResult | None:
     """
     fetches file
 
-    :param filename:
+    :param uri:
+    :type str:
+
+    :returns: LoadResult | None
     """
     try:
-        code, header, body = curl_fetch(filename)
-    except CurlError as e:
-        return make_response(f'Problem occured when curl: {e}', 400)
+        _, header, body = curl_fetch(uri)
+    except Exception as e:
+        raise e
     
-    h = { "content-type": header.get("content-type", "applicadtion/octet-stream")}
-    
-    return make_response(f"{body}", code, h)
+    return LoadResult(body, header.get("content-type", "appplication/octet-stream"))
