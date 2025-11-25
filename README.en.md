@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="dumbucket.png" alt="Dumbucket logo" />
+</p>
+
 ## Overview
 
 ### What is Dumbucket?
