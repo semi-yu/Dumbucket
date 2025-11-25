@@ -4,7 +4,7 @@
 
 Dumbucket(이하 ‘덤버킷’)은 **Gopher 프로토콜을 활용한 SSRF(Server-Side Request Forgery) 취약점을 학습·재현하기 위해 의도적으로 설계된 파일 저장·프록시 서버**입니다.
 
-해당 소프트웨어는 XX대학교 2025학년도 2학기 ‘웹 보안’ 과목의 학기 프로젝트를 수행하기 위해 제작되었습니다. 백엔드는 Python의 Flask 프레임워크를 사용하였으며, 그 외 의존성은 `pyproject.toml`을 참고하십시오.
+해당 소프트웨어는 경기대학교 2025학년도 2학기 ‘웹 보안’ 과목의 학기 프로젝트를 수행하기 위해 제작되었습니다. 백엔드는 Python의 Flask 프레임워크를 사용하였으며, 그 외 의존성은 `pyproject.toml`을 참고하십시오.
 
 ### 주의사항
 
@@ -154,3 +154,4 @@ gopher://internal-mysql:3306/_<raw-payload>
 | --- | --- | --- |
 | 01 | https://curl.se/ch/7.71.1.html | cURL 7.71.1 에서 URL 내 NUL 바이트(`\\x00`) 처리 방식이 변경된 릴리스 노트입니다. |
 | 02 | https://me2nuk.com/SSRF-Gopher-Protocol-MySQL-Raw-Data-Exploit/ | gopher 프로토콜을 활용하여 MySQL 등 내부 서비스에 raw 데이터(쿼리)를 주입하는 SSRF 기법을 설명하는 자료입니다. |
+
