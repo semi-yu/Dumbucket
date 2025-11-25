@@ -1,5 +1,8 @@
 > **English README is available.**
 > See [`README.en.md`](README.en.md) for the English version.
+<p align="center">
+    <img src="dumbucket.png" alt="Dumbucket logo" />
+</p>
 
 ## 개요
 
@@ -157,5 +160,6 @@ gopher://internal-mysql:3306/_<raw-payload>
 | --- | --- | --- |
 | 01 | https://curl.se/ch/7.71.1.html | cURL 7.71.1 에서 URL 내 NUL 바이트(`\\x00`) 처리 방식이 변경된 릴리스 노트입니다. |
 | 02 | https://me2nuk.com/SSRF-Gopher-Protocol-MySQL-Raw-Data-Exploit/ | gopher 프로토콜을 활용하여 MySQL 등 내부 서비스에 raw 데이터(쿼리)를 주입하는 SSRF 기법을 설명하는 자료입니다. |
+
 
 
