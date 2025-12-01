@@ -1,0 +1,12 @@
+FROM debian:stretch
+
+RUN printf 'deb http://archive.debian.org/debian stretch main\n\
+deb http://archive.debian.org/debian-security stretch/updates main\n' > /etc/apt/sources.list \
+    && apt-get -o Acquire::Check-Valid-Until=false update
+
+RUN apt-get update -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends php-cli redis-server \
+    && rm -rf /var/lib/apt/lists/*
+
+# 실험용: 어디서나 접속 가능하게 열어둠 (실서비스 금지)
+CMD ["redis-server", "--appendonly", "yes", "--bind", "0.0.0.0", "--protected-mode", "no"]
