@@ -1,0 +1,167 @@
+<!-- fetch.html : /fetch 엔드포인트용 파일 가져오기 페이지 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Dumbucket - 파일 가져오기 (/fetch)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS (CDN) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+    crossorigin="anonymous"
+  >
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    #response-body {
+      max-height: 400px;
+      overflow: auto;
+      background-color: #212529;
+      color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="#">Dumbucket</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/store">파일 업로드 (/store)</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="/fetch">파일 가져오기 (/fetch)</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">파일 가져오기 & SSRF 데모</h5>
+        </div>
+        <div class="card-body">
+
+          <form id="fetch-form" class="mb-3" onsubmit="return false;">
+            <div class="mb-3">
+              <label for="url-input" class="form-label">
+                파일 uuid 및 확장자
+              </label>
+              <input
+                type="text"
+                id="url-input"
+                class="form-control"
+                placeholder="4a85290ec83b11f09e4ee8fb1c7e8e4e.txt"
+                required
+              >
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+              <button id="fetch-btn" class="btn btn-primary">
+                가져오기
+              </button>
+              <div id="fetch-spinner" class="spinner-border spinner-border-sm text-primary d-none" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </form>
+
+          <hr>
+
+          <div id="fetch-meta" class="mb-2 small text-muted">
+            <!-- 상태 코드, 헤더 등의 메타 정보 -->
+          </div>
+
+          <div>
+            <h6 class="mb-2">파일 내용</h6>
+            <pre id="response-body" class="mono mb-0">// 아직 응답이 없습니다.</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Bootstrap JS (CDN) -->
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+  crossorigin="anonymous"
+></script>
+
+<script>
+  const fetchForm = document.getElementById('fetch-form');
+  const urlInput = document.getElementById('url-input');
+  const fetchBtn = document.getElementById('fetch-btn');
+  const fetchSpinner = document.getElementById('fetch-spinner');
+  const responseBody = document.getElementById('response-body');
+  const fetchMeta = document.getElementById('fetch-meta');
+
+  fetchBtn.addEventListener('click', sendFetchRequest);
+
+  async function sendFetchRequest() {
+    const target = urlInput.value.trim();
+    if (!target) return;
+
+    fetchBtn.disabled = true;
+    fetchSpinner.classList.remove('d-none');
+    responseBody.textContent = '// 요청 중...';
+    fetchMeta.textContent = '';
+
+    try {
+      // 여기서는 단순한 데모를 위해 /fetch?url=... 형식을 사용합니다.
+      // 실제 서버 구현에 따라 쿼리 파라미터 이름이나 메서드는 조정하세요.
+      const res = await fetch('/fetch?filename=' + 'file:///app/data/' + encodeURIComponent(target), {
+        method: 'GET'
+      });
+
+      const statusLine = `Status: ${res.status} ${res.statusText}`;
+      const contentType = res.headers.get('content-type') || '(no content-type)';
+      fetchMeta.innerHTML = `
+        <div>${statusLine}</div>
+        <div>Content-Type: <code>${escapeHtml(contentType)}</code></div>
+      `;
+
+      // 데모 편의를 위해 텍스트로 디코딩 (바이너리도 일단 문자열로 시도)
+      const text = await res.text();
+      responseBody.textContent = text || '// (빈 응답)';
+    } catch (err) {
+      fetchMeta.textContent = '요청 중 오류가 발생했습니다.';
+      responseBody.textContent = err.message;
+    } finally {
+      fetchBtn.disabled = false;
+      fetchSpinner.classList.add('d-none');
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+</script>
+</body>
+</html>

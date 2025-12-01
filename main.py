@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response, jsonify
+from flask import Flask, request, make_response, jsonify, redirect, url_for, render_template
 from dotenv import load_dotenv
 
 from src.connection import ping
@@ -10,12 +10,18 @@ from src.error_handle.formalizer import formatter
 load_dotenv()
 app = Flask(__name__)
 
+@app.route('/')
+def index():
+    return redirect(url_for('store'))
+
 @app.route('/ping')
 def pong():
     return make_response(ping(), 200)
 
-@app.post('/store')
+@app.route('/store', methods=['GET', 'POST'])
 def store():
+    if request.method == 'GET': return render_template('store.html')
+    
     if "file" not in request.files:
         return jsonify(formatter(400,
                          "File to store is required",
@@ -34,25 +40,27 @@ def store():
     if not save_result: 
         return jsonify(formatter(500, "File could not be saved due to internal errors"))
 
-    response = {
+    return jsonify({
         'code': 200,
         'message': 'OK', 
         'data': {
             'filename': filename,
             'uuid': save_result.uuid
         }
-    }
-
-    return jsonify(response)
+    })
 
 @app.get('/fetch')
 def fetch():
     filename = request.args.get("filename")
+    if not filename: return render_template('fetch.html')
+
+    """
     if not filename:
         return jsonify(formatter(400,
                          "The location of a file is required",
                          "The filename field is empty",
                          "Provide an valid file name"))    
+    """
 
     try:
         load_result = load(filename)
@@ -61,8 +69,8 @@ def fetch():
                          "The file does not exists with the given URI",
                          "File is not existing on the bucket",
                          "Check your file name, or check if you have uploaded the file (obiously)"))  
-    except InternalError:
-        return jsonify(formatter(500, "File could not be fetched due to internal errors"))  
+    except InternalError as e:
+        return jsonify(formatter(500, f"File could not be fetched due to internal errors: {e}"))  
 
     content = load_result.content
     content_type = load_result.content_type
