@@ -86,51 +86,12 @@ curl "http://localhost:5000/fetch?filename=gopher://internal-db:3306/_<raw-paylo
 ## 실행 방법
 
 이 방법은 MySQL이 내부 네트워크에 구성되었다는 가정 아래 `docker-compose.yml` 을 작성합니다.
+- 이제 Dumbucket은 서비스를 모사도록 환경을 정의한 `docker-compose.yml`를 기본적으로 제공하고 있습니다.
 
-### 1. 내부 네트워크 구성
+### 1. 테스트용 Docker compose 네트워크 실행
 
-```python
-version: "3.9"
-
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ssrf-bucket
-    ports:
-      - "5000:5000"
-    environment:
-      - FLASK_ENV=development
-    depends_on:
-      - mysql
-    networks:
-      - ssrf-net
-
-  mysql:
-    image: mysql:8.0
-    container_name: ssrf-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_ROOT_PASSWORD: ""
-      MYSQL_DATABASE: testdb
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: testpass
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-    command: ["--default-authentication-plugin=mysql_native_password"]
-    networks:
-      - ssrf-net
-
-networks:
-  ssrf-net:
-    driver: bridge
-
-volumes:
-  mysql-data:
+```bash
+docker compose up --build
 ```
 
 - 덤버킷의 내부 포트는 기본적으로 `5000` 으로 설정되어 있습니다.
@@ -138,13 +99,7 @@ volumes:
     - 컨테이너 외부 포트는 `p <host_port>:5000` 으로 매핑을 변경하고,
     - 애플리케이션 내부 포트 번호는 현재 버전에서는 `main.py` 내 Flask 실행 부분에서 직접 수정해야 합니다.
 
-### 2. 테스트용 Docker compose 네트워크 실행
-
-```bash
-docker compose up --build
-```
-
-이제 외부 사용자는 직접 `internal-mysql:3306` 에 접근할 수 없지만, 덤버킷 `/fetch` 엔드포인트에 하기와 같은 URL을 전달해 내부 서비스로 요청을 우회 전송하는 SSRF 시나리오를 실습할 수 있습니다.
+- 이제 외부 사용자는 직접 `internal-mysql:3306` 에 접근할 수 없지만, 덤버킷 `/fetch` 엔드포인트에 하기와 같은 URL을 전달해 내부 서비스로 요청을 우회 전송하는 SSRF 시나리오를 실습할 수 있습니다.
 
 ```
 gopher://internal-mysql:3306/_<raw-payload>
@@ -160,6 +115,7 @@ gopher://internal-mysql:3306/_<raw-payload>
 | --- | --- | --- |
 | 01 | https://curl.se/ch/7.71.1.html | cURL 7.71.1 에서 URL 내 NUL 바이트(`\\x00`) 처리 방식이 변경된 릴리스 노트입니다. |
 | 02 | https://me2nuk.com/SSRF-Gopher-Protocol-MySQL-Raw-Data-Exploit/ | gopher 프로토콜을 활용하여 MySQL 등 내부 서비스에 raw 데이터(쿼리)를 주입하는 SSRF 기법을 설명하는 자료입니다. |
+
 
 
 
